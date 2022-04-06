@@ -53,7 +53,11 @@ class UsersViewSet(ViewSet):
         if not serializer.is_valid():
             return Response({"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
-        return Response({"detail": "updated"}, status=status.HTTP_200_OK)
+        return Response({"detail": "user partially updated"}, status=status.HTTP_200_OK)
 
-    def destroy(self, request, id=None):
-        pass
+    def destroy(self, request, pk=None):
+        if not request.user.is_superuser and int(request.user.id) != int(pk):
+            return Response({"detail": "only admin can remove users"}, status=status.HTTP_401_UNAUTHORIZED)
+        if not get_object_or_404(CustomUser, id=pk).delete():
+            return Response({"detail": "can't remove user"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "user removed"}, status=status.HTTP_200_OK)
