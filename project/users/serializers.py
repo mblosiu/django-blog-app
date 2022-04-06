@@ -1,16 +1,18 @@
-import re
+from math import floor
 
 from rest_framework import serializers
+from django.utils.timezone import now
 
 from .models import CustomUser
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+    user_age = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'password', 'email', 'password2']
+        fields = ['id', 'username', 'email', 'password', 'password2', 'name', 'surname', 'birth_date', 'user_age']
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -51,15 +53,32 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         return user
 
-    def update(self, user, validated_data):
-        username = validated_data.get('username')
-        email = validated_data.get('email')
+    def update(self, instance, validated_data):
+        email = validated_data.get('email') or None
         password = validated_data.get('password')
+        password2 = validated_data.get('password2')
+        name = validated_data.get('name')
+        surname = validated_data.get('surname')
+        birth_date = validated_data.get('birth_date')
 
-        user.username = username
-        user.email = email
-        user.set_password(password)
+        if email:
+            instance.email = email
+        if password and password2:
+            instance.set_password(password)
+        if name:
+            instance.name = name
+        if surname:
+            instance.surname = surname
+        if birth_date:
+            instance.birth_date = birth_date
 
-        user.save()
+        instance.save()
 
-        return user
+        return instance
+
+    def get_user_age(self, obj):
+        if obj.birth_date:
+            timedelta = now() - obj.birth_date
+            return floor(timedelta.days / 365.25)
+        else:
+            return None

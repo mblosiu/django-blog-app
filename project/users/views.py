@@ -28,7 +28,6 @@ class UsersViewSet(ViewSet):
 
     def create(self, request):
         serializer = CustomUserSerializer(data=request.data)
-        print(request.data)
         if not serializer.is_valid():
             return Response({"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
@@ -41,7 +40,7 @@ class UsersViewSet(ViewSet):
 
     def retrieve(self, request, pk=None):
         queryset = CustomUser.objects.all()
-        user = get_object_or_404(queryset, pk=pk)
+        user = get_object_or_404(queryset, id=pk)
         serializer = CustomUserSerializer(user)
         return Response(serializer.data)
 
@@ -49,7 +48,12 @@ class UsersViewSet(ViewSet):
         pass
 
     def partial_update(self, request, pk=None):
-        pass
+        user = get_object_or_404(CustomUser, id=pk)
+        serializer = CustomUserSerializer(instance=user, data=request.data)
+        if not serializer.is_valid():
+            return Response({"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response({"detail": "updated"}, status=status.HTTP_200_OK)
 
-    def destroy(self, request, pk=None):
+    def destroy(self, request, id=None):
         pass
